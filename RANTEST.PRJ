@@ -1,0 +1,7 @@
+-lookup = *.mod = .\src;.\src\tests;\pmos2\src
+-lookup = *.def = .\def;\pmos2\def
+-lookup = *.sym = .\sym
+-lookup = *.obj = .\obj
+
+!module RanTest
+

@@ -1,0 +1,9 @@
+-lookup = *.mod = .\src\tests;.\src
+-lookup = *.def = .\def
+-lookup = *.sym = .\sym
+-lookup = *.obj = .\obj
+
+-link = "link386 @%s",mkfname#mkfext
+
+!module DeTest
+

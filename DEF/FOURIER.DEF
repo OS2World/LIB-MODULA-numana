@@ -1,0 +1,60 @@
+DEFINITION MODULE Fourier;
+
+        (********************************************************)
+        (*                                                      *)
+        (*              Fast Fourier Transform                  *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Last edited:        31 July 1996                    *)
+        (*  Status:             Working                         *)
+        (*                                                      *)
+        (********************************************************)
+
+PROCEDURE FFT3 (Direct: BOOLEAN;  N: CARDINAL;
+                        VAR (*INOUT*) data: ARRAY OF LONGCOMPLEX);
+
+    (* Fast Fourier transform of an array of N complex data points.     *)
+    (* The result is returned in the same array.  N must be a power of  *)
+    (* two.  This is essentially the Cooley-Tukey algorithm, modulo a   *)
+    (* few changes I've made for efficiency.                            *)
+    (* Specify Direct=FALSE for an inverse transform.                   *)
+
+PROCEDURE FFT8 (Direct: BOOLEAN;  N: CARDINAL;
+                        VAR (*INOUT*) data: ARRAY OF LONGCOMPLEX);
+
+    (* Alternative implementation, based on the Sande variant of        *)
+    (* the FFT.  From my tests it's not quite as accurate as the above. *)
+
+PROCEDURE SlowFT (Direct: BOOLEAN;  N: CARDINAL;
+                                VAR (*IN*) X: ARRAY OF LONGCOMPLEX;
+                                VAR (*OUT*) A: ARRAY OF LONGCOMPLEX);
+
+    (* For comparison: a Fourier transform by the slow method.  This is *)
+    (* both slower and less accurate than the FFT, so you wouldn't      *)
+    (* normally bother using it.  It's here simply because it provides  *)
+    (* a base against which I can compare my FFT implementations.       *)
+
+PROCEDURE RealFFT (Direct: BOOLEAN;  N: CARDINAL;
+                                VAR (*INOUT*) data: ARRAY OF LONGREAL);
+
+    (* Fast Fourier transform of an array of N real data points.        *)
+    (* N must be a power of two.  The complex result is returned in the *)
+    (* same array, by storing each complex number in two successive     *)
+    (* elements of data (the real part first, then the imaginary part). *)
+    (* This means that we can return only (N DIV 2) answers, but this   *)
+    (* is usually acceptable: because of the symmetries for real input  *)
+    (* data, it suffices to confine our attention to the positive half  *)
+    (* of the frequency spectrum.                                       *)
+
+    (* In fact we return (N DIV 2)+1 complex results, by storing the    *)
+    (* result for the highest frequency in data[1].  This works because *)
+    (* the values of the transform for zero frequency and this highest  *)
+    (* frequency are both real, i.e. we're overwriting an imaginary     *)
+    (* part which is known to be zero anyway.                           *)
+
+    (* For the inverse transform (Direct=FALSE), the original complex   *)
+    (* data should be packed into the array as above, and the answer    *)
+    (* is a genuine real array.                                         *)
+
+END Fourier.
+

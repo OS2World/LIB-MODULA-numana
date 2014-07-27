@@ -1,0 +1,93 @@
+DEFINITION MODULE Cx;
+
+        (********************************************************)
+        (*                                                      *)
+        (*              Complex number arithmetic               *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Last edited:        29 July 1996                    *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (*      This version takes advantage of the ISO M2      *)
+        (*      built-in LONGCOMPLEX type.  Strictly speaking   *)
+        (*      this module is not necessary at all, but it's   *)
+        (*      here to simplify porting from non-ISO compilers.*)
+        (*                                                      *)
+        (********************************************************)
+
+TYPE Complex = LONGCOMPLEX;
+
+(************************************************************************)
+
+PROCEDURE Cmplx (x, y: LONGREAL): Complex;
+
+    (* Returns x + iy. *)
+
+PROCEDURE Re (Z: Complex): LONGREAL;
+
+    (* Returns the real part of Z. *)
+
+PROCEDURE Im (Z: Complex): LONGREAL;
+
+    (* Returns the imaginary part of Z. *)
+
+PROCEDURE Magnitude (Z: Complex): LONGREAL;
+
+    (* Returns the magnitude of Z. *)
+
+PROCEDURE Phase (Z: Complex): LONGREAL;
+
+    (* Returns the phase (angle) of Z.  The result is in the range      *)
+    (* -PI to +PI, but never exactly equal to -PI.                      *)
+
+PROCEDURE Conjg (Z: Complex): Complex;
+
+    (* Returns the complex conjugate of Z. *)
+
+PROCEDURE Add (A, B: Complex): Complex;
+
+    (* Computes A + B. *)
+
+PROCEDURE Sub (A, B: Complex): Complex;
+
+    (* Computes A - B. *)
+
+PROCEDURE Mul (A, B: Complex): Complex;
+
+    (* Computes A*B. *)
+
+PROCEDURE RMul (A: LONGREAL;  B: Complex): Complex;
+
+    (* Multiplication by a real number. *)
+
+PROCEDURE Div (A, B: Complex): Complex;
+
+    (* Computes A/B. *)
+
+PROCEDURE Sqt (Z: Complex): Complex;
+
+    (* Returns the square root of Z. *)
+
+PROCEDURE Cln (Z: Complex): Complex;
+
+    (* Complex logarithm (untested. *)
+
+PROCEDURE Cexp (Z: Complex): Complex;
+
+    (* Complex exponential. *)
+
+PROCEDURE Csin (Z: Complex): Complex;
+
+    (* Complex sine (untested). *)
+
+PROCEDURE Ccos (Z: Complex): Complex;
+
+    (* Complex cosine (untested). *)
+
+PROCEDURE Write (Z: Complex;  places: CARDINAL);
+
+    (* Writes Z in Cartesian form, with "places" characters allowed     *)
+    (* for each of the real and imaginary parts.                        *)
+
+END Cx.
+

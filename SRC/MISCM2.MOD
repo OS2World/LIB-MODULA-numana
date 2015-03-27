@@ -5,7 +5,7 @@ IMPLEMENTATION MODULE MiscM2;
         (*          Miscellaneous utility procedures            *)
         (*                                                      *)
         (*  Programmer:         P. Moylan                       *)
-        (*  Last edited:        31 July 1996                    *)
+        (*  Last edited:        16 March 2015                   *)
         (*  Status:             OK                              *)
         (*                                                      *)
         (*   Shortcomings:                                      *)
@@ -197,6 +197,16 @@ PROCEDURE SelectWindow (w: Window);
     BEGIN
         cw := w;
     END SelectWindow;
+
+(************************************************************************)
+
+PROCEDURE WriteChar (ch: CHAR);
+
+    (* Writes ch to the current window. *)
+
+    BEGIN
+        STextIO.WriteChar (ch);
+    END WriteChar;
 
 (************************************************************************)
 

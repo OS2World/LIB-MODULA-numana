@@ -1,0 +1,104 @@
+DEFINITION MODULE Integration;
+
+        (********************************************************)
+        (*                                                      *)
+        (*              Solving differential equations          *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Last edited:        16 August 1996                  *)
+        (*  Status:             Working                         *)
+        (*                                                      *)
+        (********************************************************)
+
+FROM SYSTEM IMPORT (*type*) ADDRESS;
+
+TYPE
+    (* User-supplied procedure to compute the right-hand side of the    *)
+    (* differential equation being solved.  The equation being solved   *)
+    (* is dy/dt = f(t,y), where t is a scalar and y is a vector.        *)
+    (* The procedure to compute f(t,y) has two input parameters and     *)
+    (* one result parameter.                                            *)
+
+    RHSproc = PROCEDURE (LONGREAL, ARRAY OF LONGREAL, VAR (*OUT*) ARRAY OF LONGREAL);
+
+    (* You have a choice of solution methods.  RK4 is the standard and  *)
+    (* popular fourth-order Runge-Kutta method with fixed step size.    *)
+
+    (* RK5 is a fifth-order variant of this which adaptively updates    *)
+    (* the step size.  Unless you insist on having a fixed step size,   *)
+    (* RK5 will in general be more efficient and accurate; it does more *)
+    (* computation per step, but (except for particularly non-smooth    *)
+    (* problems) it compensates for this by taking bigger steps.        *)
+
+    (* MM is the modified midpoint method - generally not as good as    *)
+    (* Runge-Kutta, but I threw it in for completeness.                 *)
+
+    (* BS is the Bulirsch-Stoer method, which tends to be good when     *)
+    (* you want large step sizes.                                       *)
+
+    SolutionMethod = (RK4, RK5, MM, BS);
+
+    (* User-supplied procedure which is called each time a new solution *)
+    (* point has been calculated.  The second and third parameters are  *)
+    (* the current values of t and y.  The first parameter can be used  *)
+    (* for anything you like - title information, which screen window   *)
+    (* to use, etc.                                                     *)
+
+    PlotProc = PROCEDURE (ADDRESS, LONGREAL, ARRAY OF LONGREAL);
+
+(************************************************************************)
+
+PROCEDURE Solve (N: CARDINAL;  RHS: RHSproc;  method: SolutionMethod;
+                        Plot: PlotProc;  Extra: ADDRESS;
+                        t0, tf, minstep, maxstep: LONGREAL;
+                        y0: ARRAY OF LONGREAL;  eps: LONGREAL);
+
+    (* Solves an Nth degree differential equation dy/dt = f(t,y) from   *)
+    (* t=t0 to t=tf, calling procedure Plot at each step.  The          *)
+    (* parameters are:                                                  *)
+    (*          N       the number of elements in y                     *)
+    (*          RHS     procedure to compute f(t,y)                     *)
+    (*          method  see above for the definition of SolutionMethod. *)
+    (*          Plot    procedure which is called at each step, to      *)
+    (*                  tell the client the current values of t and y.  *)
+    (*          Extra   used as the first parameter to Plot.  You can   *)
+    (*                  set this to NIL, or you can use it to pass      *)
+    (*                  extra information that Plot needs to know,      *)
+    (*                  e.g. which of several DEs is being solved, or   *)
+    (*                  which screen window to use.                     *)
+    (*          t0      initial value of t                              *)
+    (*          tf      final value of t - we stop when a step takes us *)
+    (*                  up to or beyond tf.                             *)
+    (*          minstep minimum step size - needs to be moderately      *)
+    (*                  small, but not so small that you get stuck for  *)
+    (*                  a long time making negligible progress.  The    *)
+    (*                  "best" value depends on the smoothness of the   *)
+    (*                  solution, and may have to be established by     *)
+    (*                  trial and error.                                *)
+    (*          maxstep maximum step size - make this fairly large, so  *)
+    (*                  that the solver can cruise quickly along the    *)
+    (*                  long straight sections (if any) while still     *)
+    (*                  slowing down for the hairpin bends.  You might  *)
+    (*                  however have to limit maxstep for the sake of   *)
+    (*                  getting a smooth-looking graph plot.            *)
+    (*          y0      initial value of y.                             *)
+    (*          eps     specification of required relative error.       *)
+    (*                  Make this small, subject to the following       *)
+    (*                  proviso: if the actual step falls as low as     *)
+    (*                  minstep, then it's likely that you're no longer *)
+    (*                  getting the specified accuracy.  In this case   *)
+    (*                  you should decrease minstep, or increase eps,   *)
+    (*                  or simply accept that the error specification   *)
+    (*                  is no longer being met.                         *)
+    (*                                                                  *)
+    (* When using the fixed-step solution method RK4, maxstep is used   *)
+    (* as the step size, and minstep and eps are ignored.               *)
+    (*                                                                  *)
+    (* Method MM is also a fixed-step approach, but each step is        *)
+    (* internally subdivided into a sequence of smaller steps.  In      *)
+    (* this case maxstep is the step size, and maxstep/minstep is used  *)
+    (* as the number of internal divisions.  In this case too parameter *)
+    (* eps is ignored.                                                  *)
+
+END Integration.
+

@@ -1,11 +1,11 @@
-xc.msg = E:\Apps\XDS\bin
-xc.cfg = E:\Apps\XDS\bin
-*.tem  = E:\Apps\XDS\bin
-*.lib  = E:\Apps\XDS\lib
-*.sym  = $!\sym;E:\Apps\XDS\sym
+xc.msg = D:\XDS\bin
+xc.cfg = D:\XDS\bin
+*.tem  = D:\XDS\bin
+*.lib  = D:\XDS\lib\X86
+*.sym  = $!\sym;D:\XDS\sym
 *.obj  = $!\obj
 *.rsp  = $!\obj
-*.def  = $!\def;E:\Apps\XDS\os2def;e:\Apps\XDS\def
+*.def  = $!\def;D:\XDS\def\OS2;D:\XDS\def\ISO
 *.mod  = $!\src;$!\src\tests
 *.ob2  = $!\src
 *.prj  = $!

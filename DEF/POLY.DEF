@@ -6,7 +6,7 @@ DEFINITION MODULE Poly;
         (*      This version uses a vector representation       *)
         (*                                                      *)
         (*  Programmer:         P. Moylan                       *)
-        (*  Last edited:        29 May 1995                     *)
+        (*  Last edited:        15 March 2015                   *)
         (*  Status:             OK                              *)
         (*                                                      *)
         (********************************************************)
@@ -67,6 +67,10 @@ PROCEDURE Destroy (VAR (*INOUT*) P: Polynomial);
     (* is properly structured as a polynomial (i.e. that an Init has    *)
     (* previously been done on it).                                     *)
 
+PROCEDURE Copy (P: Polynomial): Polynomial;
+
+    (* Creates a copy of a polynomial. *)
+
 (************************************************************************)
 (*                      THE BASIC OPERATIONS                            *)
 (************************************************************************)
@@ -99,6 +103,14 @@ PROCEDURE Div (A, B: Polynomial;  VAR (*INOUT*) Q, R: Polynomial);
     (* Computes A/B.  On return the quotient is Q and the       *)
     (* remainder is R.                                          *)
 
+PROCEDURE GCD (A, B: Polynomial): Polynomial;
+
+    (* Returns the greatest common divisor of A and B. If both are zero *)
+    (* we return zero. If one is zero then we define the other to be    *)
+    (* the GCD. Otherwise, we return the monic polynomial of greatest   *)
+    (* degree that is a common factor of both A and B. If there is no   *)
+    (* common factor, the answer will be 1.                             *)
+
 (************************************************************************)
 (*                      ROOTS OF POLYNOMIALS                            *)
 (************************************************************************)
@@ -120,6 +132,10 @@ PROCEDURE FindRoots (P: Polynomial;  VAR (*OUT*) roots: ARRAY OF LONGCOMPLEX);
 (************************************************************************)
 (*                          SCREEN OUTPUT                               *)
 (************************************************************************)
+
+PROCEDURE SetVariableName (ch: CHAR);
+
+    (* Specifies the character that Write will use as the variable. *)
 
 PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
 

@@ -1,0 +1,106 @@
+DEFINITION MODULE Rational;
+
+        (********************************************************)
+        (*                                                      *)
+        (* Operations on rational functions of a single variable*)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Last edited:        17 March 2015                   *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+(************************************************************************)
+(*                      IMPORTANT CONVENTION                            *)
+(*                                                                      *)
+(* Most of the procedures in this module use "INOUT" parameters for     *)
+(* their results.  It is assumed that you are likely to want to re-use  *)
+(* variables (especially where a calculation involves temporary         *)
+(* variables for intermediate results), so it's likely that the         *)
+(* variable that will receive the result already has a valid value      *)
+(* before the call.  In such a case there is an implicit "Destroy"      *)
+(* operation that recovers the space occupied by the old value, before  *)
+(* that value is replaced by the new result.                            *)
+(*                                                                      *)
+(* The internal calculations are ordered in such a way that the new     *)
+(* result is calculated before the old value is destroyed.  This allows *)
+(* you to use operations like Add(A,B,A) safely; the old value of A     *)
+(* is fetched correctly before it is overwritten by the result.         *)
+(*                                                                      *)
+(* The price to be paid for this flexibility is that you _must_ do an   *)
+(* "Init" operation on every variable before the first time you use it. *)
+(* If you forget the "Init", this module might try to do a "DISPOSE"    *)
+(* using an invalid pointer.                                            *)
+(*                                                                      *)
+(************************************************************************)
+
+IMPORT Poly;
+
+TYPE Rational;                  (* is private *)
+
+(************************************************************************)
+(*           CREATING AND DESTROYING RATIONAL FUNCTIONS                 *)
+(************************************************************************)
+
+PROCEDURE Init (VAR (*OUT*) R: Rational);
+
+    (* This should be the first operation performed on R, since this    *)
+    (* module needs to keep track of which objects have already had     *)
+    (* space allocated for them.  It creates the zero function.         *)
+
+PROCEDURE Assign (VAR (*INOUT*) R: Rational;
+                         numcoeffs, denomcoeffs: ARRAY OF Poly.CoeffType);
+
+    (* Creates a rational function with specified numerator and         *)
+    (* denominator coefficients.  The previous value, if any, is lost.  *)
+    (* The coefficients are specified from low to high degree; for      *)
+    (* example, the coefficient set specified by the array              *)
+    (* (1.0, 2.0, 3.0) gives the second-degree polynomial               *)
+    (* 1.0 + 2.0*x + 3.0*x^2.                                           *)
+
+PROCEDURE Destroy (VAR (*INOUT*) R: Rational);
+
+    (* Deallocates the space occupied by R.  R is still considered to   *)
+    (* exist, and its value is the zero function.  The difference       *)
+    (* between Init and Destroy is that Init assumes that the input     *)
+    (* value of R is random rubbish, whereas Destroy assumes that R     *)
+    (* is properly structured (i.e. that an Init has previously been    *)
+    (* done on it).                                                     *)
+
+(************************************************************************)
+(*                      THE BASIC OPERATIONS                            *)
+(************************************************************************)
+
+PROCEDURE Negate (R: Rational);
+
+    (* P := -P.  This is an in-place operation, i.e. the original       *)
+    (* value of P is overwritten.                                       *)
+
+PROCEDURE Add (A, B: Rational;  VAR (*INOUT*) C: Rational);
+
+    (* Computes C := A + B. *)
+
+PROCEDURE Sub (A, B: Rational;  VAR (*INOUT*) C: Rational);
+
+    (* Computes C := A - B. *)
+
+PROCEDURE Mul (A, B: Rational;  VAR (*INOUT*) C: Rational);
+
+    (* Computes C := A*B. *)
+
+PROCEDURE Div (A, B: Rational;  VAR (*INOUT*) Q: Rational);
+
+    (* Computes Q = A/B.  *)
+
+(************************************************************************)
+(*                          SCREEN OUTPUT                               *)
+(************************************************************************)
+
+PROCEDURE Write (R: Rational;  places, linesize: CARDINAL);
+
+    (* Writes R to the screen, where each coefficient is allowed to be  *)
+    (* up to "places" characters wide, and "linesize" is the number of  *)
+    (* characters allowed before we have to wrap onto a new line.       *)
+
+END Rational.
+

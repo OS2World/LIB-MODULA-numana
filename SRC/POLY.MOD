@@ -6,10 +6,12 @@ IMPLEMENTATION MODULE Poly;
         (*      This version uses a vector representation       *)
         (*                                                      *)
         (*  Programmer:         P. Moylan                       *)
-        (*  Last edited:        31 July 1996                    *)
+        (*  Last edited:        17 March 2015                   *)
         (*  Status:             Working                         *)
         (*                                                      *)
         (********************************************************)
+
+IMPORT Strings;
 
 FROM SYSTEM IMPORT
     (* proc *)  ADR;
@@ -20,10 +22,17 @@ FROM Storage IMPORT
 FROM LongComplexMath IMPORT
     (* proc *)  abs, conj, sqrt, scalarMult;
 
-IMPORT MiscM2;
 FROM MiscM2 IMPORT
     (* proc *)  PressAnyKey, WriteString, WriteLn, Error, Sqrt,
-                LongRealToString;
+                LongRealToString, BlockCopy;
+
+(*
+FROM MiscM2 IMPORT              (* while debugging *)
+    (* proc *)  WriteChar, WriteCard, WriteLongReal;
+
+FROM SYSTEM IMPORT              (* while debugging *)
+    (* proc *)  CAST;
+*)
 
 (************************************************************************)
 
@@ -42,7 +51,12 @@ TYPE
                         pcoeffs: CoeffPointer;
                     END (*RECORD*);
 
+VAR varname: CHAR;
+
 (************************************************************************)
+(*                      DEBUGGING / TESTING ROUTINES                    *)
+(************************************************************************)
+
 (*
 PROCEDURE Checkpoint (message: ARRAY OF CHAR);
 
@@ -50,7 +64,102 @@ PROCEDURE Checkpoint (message: ARRAY OF CHAR);
         WriteString (message);  WriteLn;
         PressAnyKey;
     END Checkpoint;
+
+(************************************************************************)
+
+PROCEDURE WriteHex (N: CARDINAL);
+
+    (* Writes N in hexadecimal. *)
+
+    BEGIN
+        IF N > 16 THEN
+            WriteHex (N DIV 16);
+            N := N MOD 16;
+        END (*IF*);
+        IF N > 9 THEN
+            WriteChar (CHR(ORD('A')+N-10));
+        ELSE
+            WriteChar (CHR(ORD('0')+N));
+        END (*IF*);
+    END WriteHex;
+
+(************************************************************************)
+
+PROCEDURE DumpHex (message: ARRAY OF CHAR;  N: CARDINAL);
+
+    (* For debugging, writes value of N in hexadecimal. *)
+
+    BEGIN
+        WriteString (message);
+        WriteHex (N);
+        WriteLn;
+    END DumpHex;
+
+(************************************************************************)
+
+PROCEDURE DumpHex2 (message1: ARRAY OF CHAR;  M: CARDINAL;
+                    message2: ARRAY OF CHAR;  N: CARDINAL);
+
+    (* For debugging, writes value of M and N in hexadecimal. *)
+
+    BEGIN
+        WriteString (message1);
+        WriteHex (M);
+        WriteString (message2);
+        WriteHex (N);
+        WriteLn;
+    END DumpHex2;
+
+(************************************************************************)
+
+PROCEDURE Dump (message: ARRAY OF CHAR;  P: Polynomial);
+
+    (* For debugging, shows internal structure of P. *)
+
+    VAR j: CARDINAL;
+
+    BEGIN
+        WriteString (message);
+        IF P = NIL THEN
+            WriteString ("NIL");
+        ELSE
+            WriteString ("degree: ");
+            WriteCard (P^.degree);
+            WriteString (", coeffs ");
+            IF P^.pcoeffs = NIL THEN
+                WriteString ("NIL");
+            ELSE
+                FOR j := 0 TO P^.degree DO
+                    WriteLongReal (P^.pcoeffs^[j], 8);
+                END (*FOR*);
+            END (*IF*);
+        END (*IF*);
+        WriteLn;
+    END Dump;
+
+(************************************************************************)
+
+PROCEDURE DumpP (message: ARRAY OF CHAR;  P: Polynomial);
+
+    (* Like Dump, but displays pointer values. *)
+
+    BEGIN
+        WriteString (message);
+        IF P = NIL THEN
+            WriteString ("NIL");
+        ELSE
+            WriteHex (CAST(CARDINAL, P));
+            WriteString (", pcoeffs ");
+            IF P^.pcoeffs = NIL THEN
+                WriteString ("NIL");
+            ELSE
+                WriteHex (CAST(CARDINAL, P^.pcoeffs));
+            END (*IF*);
+        END (*IF*);
+        WriteLn;
+    END DumpP;
 *)
+
 (************************************************************************)
 (*                CREATING AND DESTROYING POLYNOMIALS                   *)
 (************************************************************************)
@@ -87,7 +196,7 @@ PROCEDURE Reduce (VAR (*INOUT*) P: Polynomial);
             ELSIF N < P^.degree THEN
                 bytecount := (N+1)*SIZE(CoeffType);
                 ALLOCATE (newcoeffs, bytecount);
-                MiscM2.BlockCopy (P^.pcoeffs, newcoeffs, bytecount);
+                BlockCopy (P^.pcoeffs, newcoeffs, bytecount);
                 DEALLOCATE (P^.pcoeffs, (P^.degree+1)*SIZE(CoeffType));
                 P^.pcoeffs := newcoeffs;
                 P^.degree := N;
@@ -128,7 +237,7 @@ PROCEDURE Assign (VAR (*INOUT*) P: Polynomial;
         Destroy (P);
         P := Make (HIGH(coeffs));
         WITH P^ DO
-            MiscM2.BlockCopy (ADR(coeffs), pcoeffs, (degree+1)*SIZE(CoeffType));
+            BlockCopy (ADR(coeffs), pcoeffs, (degree+1)*SIZE(CoeffType));
         END (*WITH*);
         Reduce (P);
     END Assign;
@@ -148,7 +257,7 @@ PROCEDURE Destroy (VAR (*INOUT*) P: Polynomial);
     END Destroy;
 
 (************************************************************************)
-(*                      SOME INTERNAL UTILITIES                         *)
+(*                          CREATING A COPY                             *)
 (************************************************************************)
 
 PROCEDURE Copy (P: Polynomial): Polynomial;
@@ -162,7 +271,7 @@ PROCEDURE Copy (P: Polynomial): Polynomial;
         IF P <> NIL THEN
             result := Make (P^.degree);
             WITH result^ DO
-                MiscM2.BlockCopy (P^.pcoeffs, pcoeffs,
+                BlockCopy (P^.pcoeffs, pcoeffs,
                                 (degree+1)*SIZE(CoeffType));
             END (*WITH*);
         END (*IF*);
@@ -283,7 +392,7 @@ PROCEDURE Div (A, B: Polynomial;  VAR (*INOUT*) Q, R: Polynomial);
             Error ("Division by zero");  RETURN;
         END (*IF*);
         rem := Copy(A);
-        IF Degree(A) < Degree(B) THEN
+        IF A^.degree < B^.degree THEN
             quot := NIL;
         ELSE
             quot := Make (A^.degree - B^.degree);
@@ -301,6 +410,54 @@ PROCEDURE Div (A, B: Polynomial;  VAR (*INOUT*) Q, R: Polynomial);
         Destroy (Q);  Q := quot;
         Destroy (R);  R := rem;
     END Div;
+
+(************************************************************************)
+(*                       GREATEST COMMON DIVISOR                        *)
+(************************************************************************)
+
+PROCEDURE GCD (A, B: Polynomial): Polynomial;
+
+    (* Returns the greatest common divisor of A and B. If both are zero *)
+    (* we return zero. If one is zero then we define the other to be    *)
+    (* the GCD. Otherwise, we return the monic polynomial of greatest   *)
+    (* degree that is a common factor of both A and B. If there is no   *)
+    (* common factor, the answer will be 1.                             *)
+
+    VAR C, D, temp, remainder: Polynomial;
+        scale: CoeffType;
+        j: CARDINAL;
+
+    BEGIN
+        C := Copy(A);  D := Copy(B);
+
+        (* Desired loop invariant: degree(C) >= degree(D) *)
+
+        IF Degree(C) < Degree(D) THEN
+            temp := C;  C := D;  D := temp;
+        END (*IF*);
+
+        (* Euclid's algorithm: keep dividing until remainder is zero. *)
+
+        Init (temp);  Init (remainder);
+        WHILE D <> NIL DO
+            Div (C, D, temp, remainder);
+            C := D;  D := remainder;  remainder := NIL;
+        END (*WHILE*);
+
+        Destroy (D);  Destroy (temp);  Destroy (remainder);
+
+        (* Normalise the result. *)
+
+        scale := 1.0 / C^.pcoeffs^[C^.degree];
+        C^.pcoeffs^[C^.degree] := 1.0;
+        IF C^.degree > 0 THEN
+            FOR j := 0 TO C^.degree-1 DO
+                C^.pcoeffs^[j] := scale * C^.pcoeffs^[j];
+            END (*FOR*);
+        END (*FOR*);
+        RETURN C;
+
+    END GCD;
 
 (************************************************************************)
 (*              EVALUATING A POLYNOMIAL AT A GIVEN POINT                *)
@@ -602,11 +759,7 @@ PROCEDURE FindApproxRoots (P: Polynomial;
             (* Degree of P is greater than 2.  First find one root      *)
             (* by Mu"ller's method.                                     *)
 
-            (* Checkpoint ("FindApproxRoots, before Mueller call"); *)
-
             Mueller (P, oneroot);
-
-            (* Checkpoint ("FindApproxRoots, after Mueller call"); *)
 
             IF ABS(IM(oneroot)) < small THEN
 
@@ -631,8 +784,6 @@ PROCEDURE FindApproxRoots (P: Polynomial;
                     pcoeffs^[2] := 1.0;
                 END (*WITH*);
             END (*IF*);
-
-            (* Checkpoint ("FindApproxRoots, before deflation"); *)
 
             (* Deflate the polynomial, and find the other roots. *)
 
@@ -675,19 +826,33 @@ PROCEDURE FindRoots (P: Polynomial;  VAR (*OUT*) roots: ARRAY OF LONGCOMPLEX);
 (*                          SCREEN OUTPUT                               *)
 (************************************************************************)
 
+PROCEDURE SetVariableName (ch: CHAR);
+
+    (* Specifies the character that Write will use as the variable. *)
+
+    BEGIN
+        varname := ch;
+    END SetVariableName;
+
+(************************************************************************)
+
 PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
 
     (* Writes P to the screen, where each coefficient is allowed to be  *)
     (* up to "places" characters wide, and "linesize" is the number of  *)
     (* characters allowed before we have to wrap onto a new line.       *)
 
-    CONST Nul = CHR(0);  Space = ' ';
+    CONST
+        Nul = CHR(0);  Space = ' ';
+        buffersize = 2048;
 
-    TYPE subscript = [0..8191];
-         WhichHalf = (upper, lower);
+    TYPE
+        subscript = [0..buffersize-1];
+        extsubscript = [0..buffersize];
+        WhichHalf = (upper, lower);
 
     VAR buffer: POINTER TO ARRAY WhichHalf,subscript OF CHAR;
-        nextloc, checkpoint: subscript;
+        nextloc, checkpoint, limit: extsubscript;
 
     (********************************************************************)
 
@@ -704,18 +869,20 @@ PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
         BEGIN
             temp := "?";        (* to suppress a compiler warning *)
             FOR j := upper TO lower DO
-                IF checkpoint < linesize THEN
-                    temp := buffer^[j][checkpoint];
-                    buffer^[j][checkpoint] := Nul;
+                IF (j = lower) OR ((P <> NIL) AND (P^.degree > 1)) THEN
+                    IF checkpoint < limit THEN
+                        temp := buffer^[j][checkpoint];
+                        buffer^[j][checkpoint] := Nul;
+                    END (*IF*);
+                    WriteString (buffer^[j]);
+                    IF checkpoint < nextloc THEN
+                        buffer^[j][0] := temp;
+                        FOR k := 1 TO nextloc-checkpoint-1 DO
+                            buffer^[j][k] := buffer^[j][k+checkpoint];
+                        END (*FOR*);
+                    END (*IF*);
+                    WriteLn;
                 END (*IF*);
-                WriteString (buffer^[j]);
-                IF checkpoint < nextloc THEN
-                    buffer^[j][0] := temp;
-                    FOR k := 1 TO nextloc-checkpoint-1 DO
-                        buffer^[j][k] := buffer^[j][k+checkpoint];
-                    END (*FOR*);
-                END (*IF*);
-                WriteLn;
             END (*FOR*);
             DEC (nextloc, checkpoint);  checkpoint := 0;
         END FlushBuffer;
@@ -728,7 +895,7 @@ PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
         (* Corresponding positions in the other half are space-filled.  *)
 
         BEGIN
-            IF nextloc >= linesize THEN
+            IF nextloc >= limit THEN
                 FlushBuffer;
             END (*IF*);
             buffer^[hilo,nextloc] := ch;
@@ -800,7 +967,7 @@ PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
                 PutCoeff (coeff);
             END (*IF*);
             IF power > 0 THEN
-                PutChar (lower, "X");
+                PutChar (lower, varname);
                 IF power > 1 THEN
                     PutPower (power);
                 END (*IF*);
@@ -813,7 +980,15 @@ PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
     VAR j: power;
 
     BEGIN       (* Body of procedure Write *)
-        ALLOCATE (buffer, 2*linesize);
+        limit := buffersize;
+        IF buffersize > linesize THEN
+            limit := linesize;
+        END (*IF*);
+
+        (* Let the buffer hold enough for limit characters on both   *)
+        (* top and bottom, plus a trailing Nul on both.              *)
+
+        ALLOCATE (buffer, 2*(limit+1)*SIZE(CHAR));
         nextloc := 0;  checkpoint := 0;
         IF P = NIL THEN
             PutTerm (0.0, 0, TRUE);
@@ -823,11 +998,13 @@ PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
             (* so that we can avoid putting out a leading '+' sign.     *)
 
             PutTerm (P^.pcoeffs^[P^.degree], P^.degree, TRUE);
-            FOR j := P^.degree-1 TO 0 BY -1 DO
-                IF ABS(P^.pcoeffs^[j]) >= small THEN
-                    PutTerm (P^.pcoeffs^[j], j, FALSE);
-                END (*IF*);
-            END (*FOR*);
+            IF P^.degree > 0 THEN
+                FOR j := P^.degree-1 TO 0 BY -1 DO
+                    IF ABS(P^.pcoeffs^[j]) >= small THEN
+                        PutTerm (P^.pcoeffs^[j], j, FALSE);
+                    END (*IF*);
+                END (*FOR*);
+            END (*IF*);
         END (*IF*);
 
         (* Write out whatever is still left in the buffer. *)
@@ -835,11 +1012,13 @@ PROCEDURE Write (P: Polynomial;  places, linesize: CARDINAL);
         IF nextloc > 0 THEN
             FlushBuffer;
         END (*IF*);
-        DEALLOCATE (buffer, 2*linesize);
+        DEALLOCATE (buffer, 2*(limit+1)*SIZE(CHAR));
 
     END Write;
 
 (************************************************************************)
 
+BEGIN
+    SetVariableName ('X');
 END Poly.
 

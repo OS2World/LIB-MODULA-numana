@@ -5,7 +5,7 @@ DEFINITION MODULE MiscM2;
         (*          Miscellaneous utility procedures            *)
         (*                                                      *)
         (*  Programmer:         P. Moylan                       *)
-        (*  Last edited:        31 July 1996                    *)
+        (*  Last edited:        16 March 2015                   *)
         (*  Status:             OK                              *)
         (*                                                      *)
         (*      The purpose of this module is to provide        *)
@@ -105,6 +105,10 @@ PROCEDURE SelectWindow (w: Window);
 
     (* Specifies that all screen output, up until the next call to      *)
     (* SelectWindow, will be to window w.                               *)
+
+PROCEDURE WriteChar (ch: CHAR);
+
+    (* Writes ch to the current window. *)
 
 PROCEDURE WriteString (s: ARRAY OF CHAR);
 
